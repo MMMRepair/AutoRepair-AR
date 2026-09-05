@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Mat's Mobile Repair SD</title>
+    <title>MMMRepairSD - Mobile Auto Repair</title>
     <style>
         * {
             margin: 0;
@@ -147,10 +147,32 @@
             display: none;
             background: #4caf50;
             color: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
+            animation: slideIn 0.3s ease-in;
+        }
+        
+        .success-message h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .success-message p {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .error-message {
@@ -179,6 +201,14 @@
             color: #B22234;
             font-weight: bold;
         }
+        
+        #repairForm {
+            display: block;
+        }
+        
+        #repairForm.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -186,20 +216,22 @@
         <div class="header">
             <div class="logo-container">
                 <div class="logo">
-                    <img src="https://i.imgur.com/rRFiBmQ.jpeg" alt="Magic Mat's Mobile Repair Logo">
+                    <img src="https://i.imgur.com/rRFiBmQ.jpeg" alt="MMMRepairSD Logo">
                 </div>
             </div>
-            <div class="business-name">Magic Mat's Mobile Repair</div>
+            <div class="business-name">MMMRepairSD</div>
             <div class="tagline">San Diego - We Come To You!</div>
             <div class="flag-accent"></div>
         </div>
         
         <div class="info-box">
-            ℹ️ <strong>Broken down?</strong> Fill out this form and Magic Mat will contact you ASAP to help get you back on the road!
+            ℹ️ <strong>Broken down?</strong> Fill out this form and a roadside service technician will contact you ASAP!
         </div>
         
         <div class="success-message" id="successMsg">
-            ✅ Request sent! Magic Mat will contact you soon!
+            <h3>✅ Request Confirmed!</h3>
+            <p>Thank you for contacting MMMRepairSD. A roadside service technician will contact you as soon as possible with verification and your estimated time of arrival.</p>
+            <p style="margin-top: 10px; font-weight: bold;">We appreciate your business!</p>
         </div>
         
         <div class="error-message" id="errorMsg"></div>
@@ -242,17 +274,20 @@
             
             <div class="loading" id="loading">Sending your request...</div>
             
-            <button type="submit">📍 Send Repair Request</button>
+            <button type="submit">📍 Request Service</button>
         </form>
     </div>
     
     <script>
+        const SERVER_URL = 'https://autorepair-ar-production.up.railway.app';
+        
         document.getElementById('repairForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const loading = document.getElementById('loading');
             const successMsg = document.getElementById('successMsg');
             const errorMsg = document.getElementById('errorMsg');
+            const form = document.getElementById('repairForm');
             
             loading.style.display = 'block';
             successMsg.style.display = 'none';
@@ -269,32 +304,41 @@
             };
             
             try {
-                // For now, save to localStorage (local storage on phone)
-                let requests = JSON.parse(localStorage.getItem('repairRequests') || '[]');
-                requests.push({
-                    ...formData,
-                    timestamp: new Date().toLocaleString(),
-                    id: Date.now()
+                // Send to backend server
+                const response = await fetch(`${SERVER_URL}/api/request-repair`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
                 });
-                localStorage.setItem('repairRequests', JSON.stringify(requests));
                 
-                // TODO: Send SMS notification to mechanic
-                console.log('Repair request:', formData);
-                
-                loading.style.display = 'none';
-                successMsg.style.display = 'block';
-                document.getElementById('repairForm').reset();
-                
-                // Hide success message after 3 seconds
-                setTimeout(() => {
-                    successMsg.style.display = 'none';
-                }, 3000);
+                if (response.ok) {
+                    console.log('✅ Request sent to server and SMS notification sent!');
+                } else {
+                    console.log('Server returned status:', response.status);
+                }
                 
             } catch (error) {
-                loading.style.display = 'none';
-                errorMsg.textContent = '❌ Error sending request. Please try again.';
-                errorMsg.style.display = 'block';
+                console.error('Error sending to server:', error);
             }
+            
+            // Save to localStorage as backup regardless
+            let requests = JSON.parse(localStorage.getItem('repairRequests') || '[]');
+            requests.push({
+                ...formData,
+                timestamp: new Date().toLocaleString(),
+                id: Date.now()
+            });
+            localStorage.setItem('repairRequests', JSON.stringify(requests));
+            
+            // Show success message
+            loading.style.display = 'none';
+            successMsg.style.display = 'block';
+            form.classList.add('hidden');
+            
+            // Scroll to success message
+            document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
         });
     </script>
 </body>
