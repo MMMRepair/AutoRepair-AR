@@ -74,19 +74,39 @@
             font-size: 14px;
         }
         
-        input, textarea {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
+            color: #333;
+        }
+
+        select {
+            background-color: white;
+            cursor: pointer;
+            appearance: auto;
         }
         
-        input:focus, textarea:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #B22234;
             box-shadow: 0 0 0 3px rgba(178, 34, 52, 0.1);
+        }
+
+        input::placeholder, select::placeholder {
+            color: #999;
+        }
+
+        option {
+            color: #333;
+            background: white;
+        }
+
+        option:disabled {
+            color: #999;
         }
         
         textarea {
@@ -173,6 +193,12 @@
             border-radius: 4px;
             font-size: 13px;
         }
+
+        select:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -216,17 +242,23 @@
             
             <div class="form-group">
                 <label for="year">Vehicle Year *</label>
-                <input type="number" id="year" required placeholder="2020" min="1990" max="2030">
+                <select id="year" required>
+                    <option value="">Select Year</option>
+                </select>
             </div>
             
             <div class="form-group">
                 <label for="make">Vehicle Make *</label>
-                <input type="text" id="make" required placeholder="Honda">
+                <select id="make" required>
+                    <option value="">Select Make</option>
+                </select>
             </div>
             
             <div class="form-group">
                 <label for="model">Vehicle Model *</label>
-                <input type="text" id="model" required placeholder="Civic">
+                <select id="model" required disabled>
+                    <option value="">Select Model</option>
+                </select>
             </div>
             
             <div class="form-group">
@@ -239,11 +271,73 @@
     </div>
     
     <script>
-        const locBtn = document.getElementById('locBtn');
-        const submitBtn = document.getElementById('submitBtn');
+        const currentYear = new Date().getFullYear();
+        const yearSelect = document.getElementById('year');
+        const makeSelect = document.getElementById('make');
+        const modelSelect = document.getElementById('model');
         const form = document.getElementById('repairForm');
         const successMsg = document.getElementById('successMsg');
-        
+        const submitBtn = document.getElementById('submitBtn');
+        const locBtn = document.getElementById('locBtn');
+
+        const vehicleDatabase = {
+            'Toyota': ['Camry', 'Corolla', 'RAV4', 'Tacoma', 'Tundra', 'Highlander', 'Prius', 'Sienna', '4Runner'],
+            'Honda': ['Civic', 'Accord', 'CR-V', 'Pilot', 'Odyssey', 'Fit', 'Ridgeline'],
+            'Ford': ['Mustang', 'F-150', 'Focus', 'Fusion', 'Edge', 'Escape', 'Explorer', 'Ranger'],
+            'Chevrolet': ['Silverado', 'Malibu', 'Impala', 'Equinox', 'Blazer', 'Traverse', 'Colorado'],
+            'RAM': ['1500', '2500', '3500'],
+            'Dodge': ['Durango', 'Charger', 'Challenger', 'Journey'],
+            'BMW': ['3 Series', '5 Series', 'X3', 'X5', 'Z4'],
+            'Mercedes-Benz': ['C-Class', 'E-Class', 'GLC', 'GLE'],
+            'Hyundai': ['Elantra', 'Sonata', 'Santa Fe', 'Tucson', 'Accent'],
+            'Kia': ['Optima', 'Sorento', 'Sportage', 'Forte'],
+            'Nissan': ['Altima', 'Maxima', 'Rogue', 'Murano', 'Sentra'],
+            'Mazda': ['Mazda3', 'Mazda6', 'CX-5', 'CX-9'],
+            'Volkswagen': ['Jetta', 'Passat', 'Golf', 'Tiguan', 'Beetle'],
+            'Subaru': ['Outback', 'Legacy', 'Impreza', 'Crosstrek', 'Forester'],
+            'Jeep': ['Wrangler', 'Cherokee', 'Grand Cherokee', 'Compass'],
+            'GMC': ['Sierra', 'Terrain', 'Acadia', 'Yukon'],
+            'Lexus': ['IS', 'ES', 'RX', 'NX', 'LX'],
+            'Infiniti': ['Q50', 'Q60', 'QX50', 'QX60'],
+            'Acura': ['TLX', 'RDX', 'MDX'],
+            'Tesla': ['Model 3', 'Model S', 'Model X', 'Model Y']
+        };
+
+        // Fill year dropdown (1930 to current)
+        for (let y = currentYear; y >= 1930; y--) {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.text = y;
+            yearSelect.appendChild(opt);
+        }
+
+        // Fill make dropdown
+        const allMakes = Object.keys(vehicleDatabase).sort();
+        allMakes.forEach(make => {
+            const opt = document.createElement('option');
+            opt.value = make;
+            opt.text = make;
+            makeSelect.appendChild(opt);
+        });
+
+        // When make is selected, populate models
+        makeSelect.addEventListener('change', function() {
+            modelSelect.innerHTML = '<option value="">Select Model</option>';
+            
+            if (this.value === '') {
+                modelSelect.disabled = true;
+            } else {
+                modelSelect.disabled = false;
+                vehicleDatabase[this.value].forEach(model => {
+                    const opt = document.createElement('option');
+                    opt.value = model;
+                    opt.text = model;
+                    modelSelect.appendChild(opt);
+                });
+            }
+        });
+
+        // Location button
         locBtn.addEventListener('click', function(e) {
             e.preventDefault();
             if (!navigator.geolocation) {
@@ -253,15 +347,14 @@
             navigator.geolocation.getCurrentPosition(function(pos) {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
-                
                 document.getElementById('location').value = lat.toFixed(4) + ', ' + lng.toFixed(4);
-                
                 const mapImg = document.getElementById('mapPreview');
                 mapImg.innerHTML = '<img src="https://static-maps.yandex.ru/1.x/?ll=' + lng + ',' + lat + '&size=500,300&z=16&l=map&pt=' + lng + ',' + lat + ',pm2lbm" alt="map">';
                 mapImg.classList.add('show');
             });
         });
         
+        // Form submission
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             submitBtn.textContent = 'Request Sent';
