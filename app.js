@@ -1,16 +1,27 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const twilio = require('twilio');
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Twilio configuration
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+const mechaicPhoneNumber = '619-348-8950'; // Magic Mat's phone number
+
+const client = twilio(accountSid, authToken);
+
 // In-memory storage (replace with database later)
 let repairs = [];
 
 // POST - Customer submits repair request
-app.post('/api/request-repair', (req, res) => {
+app.post('/api/request-repair', async (req, res) => {
   const { name, location, year, make, model, problem, phone } = req.body;
   
   const repairRequest = {
@@ -26,10 +37,31 @@ app.post('/api/request-repair', (req, res) => {
   
   repairs.push(repairRequest);
   
-  // TODO: Send SMS to mechanic (Twilio integration)
-  console.log('📱 NEW REPAIR REQUEST:', repairRequest);
+  // Create Google Maps link from location
+  const mapsLink = `https://www.google.com/maps/search/${encodeURIComponent(location)}`;
   
-  res.json({ success: true, message: 'Request sent!', id: repairRequest.id });
+  // Send SMS to Magic Mat
+  const smsMessage = `🔧 NEW REPAIR REQUEST
+Name: ${name}
+Phone: ${phone}
+Location: ${location}
+Maps: ${mapsLink}
+Vehicle: ${year} ${make} ${model}
+Problem: ${problem}`;
+  
+  try {
+    await client.messages.create({
+      body: smsMessage,
+      from: twilioPhoneNumber,
+      to: '+1' + mechaicPhoneNumber.replace(/-/g, '')
+    });
+    
+    console.log('📱 SMS sent to Magic Mat:', mechaicPhoneNumber);
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+  }
+  
+  res.json({ success: true, message: 'Request sent! Magic Mat will contact you soon.', id: repairRequest.id });
 });
 
 // GET - Mechanic dashboard (all requests)
