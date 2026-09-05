@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Matt's Mobile Repair SD</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .success-message {
+            display: none;
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .error-message {
+            display: none;
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔧 Magic Matt's Mobile Repair</div>
+            <div class="tagline">San Diego - We Come To You!</div>
+        </div>
+        
+        <div class="info-box">
+            ℹ️ <strong>Broken down?</strong> Fill out this form and Magic Matt will contact you ASAP to help get you back on the road!
+        </div>
+        
+        <div class="success-message" id="successMsg">
+            ✅ Request sent! Magic Matt will contact you soon!
+        </div>
+        
+        <div class="error-message" id="errorMsg"></div>
+        
+        <form id="repairForm">
+            <div class="form-group">
+                <label for="name">Your Name *</label>
+                <input type="text" id="name" name="name" required placeholder="John Smith">
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number or Contact *</label>
+                <input type="tel" id="phone" name="phone" required placeholder="(619) 555-1234 or @instagram">
+            </div>
+            
+            <div class="form-group">
+                <label for="location">Current Location *</label>
+                <input type="text" id="location" name="location" required placeholder="Street address or intersection in San Diego">
+            </div>
+            
+            <div class="form-group">
+                <label for="year">Vehicle Year *</label>
+                <input type="number" id="year" name="year" required placeholder="2020" min="1990" max="2030">
+            </div>
+            
+            <div class="form-group">
+                <label for="make">Vehicle Make *</label>
+                <input type="text" id="make" name="make" required placeholder="Honda">
+            </div>
+            
+            <div class="form-group">
+                <label for="model">Vehicle Model *</label>
+                <input type="text" id="model" name="model" required placeholder="Civic">
+            </div>
+            
+            <div class="form-group">
+                <label for="problem">What's Wrong? *</label>
+                <textarea id="problem" name="problem" required placeholder="Engine won't start, weird noise, check engine light, etc."></textarea>
+            </div>
+            
+            <div class="loading" id="loading">Sending your request...</div>
+            
+            <button type="submit">📍 Send Repair Request</button>
+        </form>
+    </div>
+    
+    <script>
+        document.getElementById('repairForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('loading');
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            loading.style.display = 'block';
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                location: document.getElementById('location').value,
+                year: document.getElementById('year').value,
+                make: document.getElementById('make').value,
+                model: document.getElementById('model').value,
+                problem: document.getElementById('problem').value
+            };
+            
+            try {
+                // For now, save to localStorage (local storage on phone)
+                let requests = JSON.parse(localStorage.getItem('repairRequests') || '[]');
+                requests.push({
+                    ...formData,
+                    timestamp: new Date().toLocaleString(),
+                    id: Date.now()
+                });
+                localStorage.setItem('repairRequests', JSON.stringify(requests));
+                
+                // TODO: Send SMS notification to mechanic
+                console.log('Repair request:', formData);
+                
+                loading.style.display = 'none';
+                successMsg.style.display = 'block';
+                document.getElementById('repairForm').reset();
+                
+                // Hide success message after 3 seconds
+                setTimeout(() => {
+                    successMsg.style.display = 'none';
+                }, 3000);
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                errorMsg.textContent = '❌ Error sending request. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
